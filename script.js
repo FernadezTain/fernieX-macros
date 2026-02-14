@@ -149,8 +149,8 @@ function createActionElement(actionId, actionNumber) {
     
     const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     arrow.setAttribute('class', 'custom-select-arrow');
-    arrow.setAttribute('width', '20');
-    arrow.setAttribute('height', '20');
+    arrow.setAttribute('width', '16');
+    arrow.setAttribute('height', '16');
     arrow.setAttribute('viewBox', '0 0 20 20');
     arrow.setAttribute('fill', 'none');
     const arrowPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
