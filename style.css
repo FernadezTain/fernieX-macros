@@ -338,6 +338,11 @@ label {
     border: 2px solid var(--border);
     position: relative;
     animation: slideIn 0.4s ease;
+    z-index: 1;
+}
+
+.action-item.dropdown-open {
+    z-index: 50;
 }
 
 .action-header {
