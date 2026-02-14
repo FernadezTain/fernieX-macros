@@ -816,7 +816,7 @@ function createMacro() {
     document.getElementById('previewActionsCount').textContent = state.actions.length;
 
     // Формируем ссылку на бота
-    const botLink = `https://t.me/FernieXBot?start=macro_${encodedData}`;
+    const botLink = `https://t.me/FernieXZBTBot?start=macro_${encodedData}`;
     document.getElementById('installBtn').href = botLink;
 
     // Показываем секцию результата
