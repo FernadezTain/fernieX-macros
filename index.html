@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Конструктор Макросов - FernieXBot</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Заголовок -->
+        <header class="header">
+            <div class="logo">
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <rect width="40" height="40" rx="12" fill="url(#gradient)"/>
+                    <path d="M20 10L28 15V25L20 30L12 25V15L20 10Z" fill="white"/>
+                    <defs>
+                        <linearGradient id="gradient" x1="0" y1="0" x2="40" y2="40">
+                            <stop offset="0%" stop-color="#667eea"/>
+                            <stop offset="100%" stop-color="#764ba2"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <h1>Конструктор Макросов</h1>
+            </div>
+            <p class="subtitle">Создайте свой уникальный макрос для FernieXBot</p>
+        </header>
+
+        <!-- Форма создания макроса -->
+        <div class="creator-section" id="creatorSection">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Настройка триггера</h2>
+                    <span class="step-badge">Шаг 1</span>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label for="triggerType">Тип триггера</label>
+                        <select id="triggerType" class="input-select">
+                            <option value="command">Команда (начинается с /)</option>
+                            <option value="phrase">Фраза или слово</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="triggerValue">Значение триггера</label>
+                        <input 
+                            type="text" 
+                            id="triggerValue" 
+                            class="input-field" 
+                            placeholder="Например: лох или ограб"
+                        >
+                        <small class="hint">Макрос будет срабатывать при получении этого триггера</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Действия макроса</h2>
+                    <span class="step-badge">Шаг 2</span>
+                </div>
+                <div class="card-body">
+                    <div id="actionsContainer">
+                        <!-- Действия будут добавляться сюда -->
+                    </div>
+                    <button class="btn-add-action" id="addActionBtn" style="display: none;">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        Добавить еще действие
+                    </button>
+                </div>
+            </div>
+
+            <button class="btn-primary btn-create" id="createMacroBtn">
+                Создать макрос
+            </button>
+        </div>
+
+        <!-- Секция результата -->
+        <div class="result-section" id="resultSection" style="display: none;">
+            <div class="success-card">
+                <div class="success-icon">
+                    <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+                        <circle cx="40" cy="40" r="40" fill="#10b981" opacity="0.1"/>
+                        <circle cx="40" cy="40" r="30" fill="#10b981" opacity="0.2"/>
+                        <path d="M25 40L35 50L55 30" stroke="#10b981" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h2 class="success-title">Макрос готов к установке!</h2>
+                <p class="success-text">Нажмите на кнопку ниже, чтобы установить макрос в вашего бота</p>
+                
+                <div class="macro-preview">
+                    <h3>Параметры макроса:</h3>
+                    <div class="preview-item">
+                        <span class="preview-label">Триггер:</span>
+                        <span class="preview-value" id="previewTrigger"></span>
+                    </div>
+                    <div class="preview-item">
+                        <span class="preview-label">Действий:</span>
+                        <span class="preview-value" id="previewActionsCount"></span>
+                    </div>
+                </div>
+
+                <a href="#" class="btn-primary btn-install" id="installBtn" target="_blank">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2"/>
+                        <path d="M12 8L12 16M12 16L15 13M12 16L9 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Установить в бота
+                </a>
+
+                <button class="btn-secondary" id="createNewBtn">
+                    Создать новый макрос
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
