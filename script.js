@@ -796,17 +796,30 @@ function createMacro() {
         return;
     }
 
-    // Формируем данные макроса
-    const macroData = {
-        trigger: state.triggerValue,
-        actions: state.actions.map(action => ({
-            type: action.type,
-            value: action.value
-        }))
-    };
-
-    // Кодируем данные в base64 для передачи в URL
-    const encodedData = btoa(encodeURIComponent(JSON.stringify(macroData)));
+    // Формируем компактные данные макроса
+    const parts = [state.triggerValue];
+    
+    state.actions.forEach(action => {
+        if (action.type === 'get_top_position') {
+            // Парсим JSON из value
+            const data = JSON.parse(action.value);
+            // Формат: get_top:topType:subType:position
+            const subType = data.subType || '';
+            parts.push(`get_top:${data.topType}:${subType}:${data.position}`);
+        } else if (action.type === 'send_message') {
+            // Формат: msg:текст
+            parts.push(`msg:${action.value}`);
+        } else if (action.type === 'send_photo') {
+            // Формат: photo:url
+            parts.push(`photo:${action.value}`);
+        } else if (action.type === 'robbery') {
+            // Формат: rob:id
+            parts.push(`rob:${action.value}`);
+        }
+    });
+    
+    // Соединяем через |
+    const macroString = parts.join('|');
 
     // Триггер всегда в формате команды
     const triggerDisplay = `/${state.triggerValue}`;
@@ -816,7 +829,7 @@ function createMacro() {
     document.getElementById('previewActionsCount').textContent = state.actions.length;
 
     // Формируем ссылку на бота
-    const botLink = `https://t.me/FernieXZBTBot?start=macro_${encodedData}`;
+    const botLink = `https://t.me/FernieXZBTBot?start=${encodeURIComponent(macroString)}`;
     document.getElementById('installBtn').href = botLink;
 
     // Показываем секцию результата
