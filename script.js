@@ -2,23 +2,27 @@
 const state = {
     actions: [],
     maxActions: 3,
-    triggerValue: ''
+    triggerValue: '',
+    topSelections: {} // Хранение данных о выборе топов для каждого действия
 };
 
 // Типы действий
 const actionTypes = [
     { value: 'send_message', label: 'Отправить сообщение', placeholder: 'Введите текст сообщения' },
     { value: 'send_photo', label: 'Отправить фото', placeholder: 'Введите URL изображения' },
-    { value: 'send_sticker', label: 'Отправить стикер', placeholder: 'Введите ID стикера' },
-    { value: 'kick_user', label: 'Кикнуть пользователя', placeholder: 'Причина (опционально)' },
-    { value: 'mute_user', label: 'Замутить пользователя', placeholder: 'Длительность (например: 1h, 30m)' },
-    { value: 'warn_user', label: 'Выдать предупреждение', placeholder: 'Причина предупреждения' },
-    { value: 'delete_message', label: 'Удалить сообщение', placeholder: 'Не требует параметров' },
-    { value: 'pin_message', label: 'Закрепить сообщение', placeholder: 'Текст для закрепления' },
-    { value: 'send_dice', label: 'Отправить кубик', placeholder: 'Тип: dice, dart, basketball' },
-    { value: 'add_role', label: 'Выдать роль', placeholder: 'Название роли' },
-    { value: 'remove_role', label: 'Забрать роль', placeholder: 'Название роли' },
-    { value: 'set_title', label: 'Установить титул', placeholder: 'Новый титул пользователя' }
+    { value: 'get_top_position', label: 'Узнать позицию в топе', placeholder: 'Специальное действие', hasSubOptions: true },
+];
+
+// Опции для топов
+const topOptions = [
+    { value: 'balance', label: 'Баланс', hasSubType: false },
+    { value: 'charity', label: 'Благотворительность', hasSubType: false },
+    { value: 'digital_coins', label: 'Digital Coins', hasSubType: false },
+    { value: 'messages', label: 'Сообщения', hasSubType: true, subTypes: [
+        { value: 'local', label: 'Локальный Топ' },
+        { value: 'global', label: 'Глобальный Топ' }
+    ]},
+    { value: 'level', label: 'Уровень', hasSubType: false }
 ];
 
 // Инициализация
@@ -231,14 +235,238 @@ function handleActionTypeChange(actionId, actionType) {
     const label = document.getElementById(`action-label-${actionId}`);
     const input = document.getElementById(`action-input-${actionId}`);
 
-    if (actionType) {
+    if (actionType === 'get_top_position') {
+        // Специальная обработка для "Узнать позицию в топе"
+        valueGroup.style.display = 'block';
+        valueGroup.innerHTML = `
+            <label>Выберите тип топа</label>
+            <div class="custom-select-wrapper">
+                <div class="custom-select" onclick="toggleTopSelect(${actionId})">
+                    <span class="custom-select-text" id="top-select-text-${actionId}">Выберите топ</span>
+                    <svg class="custom-select-arrow" width="16" height="16" viewBox="0 0 20 20" fill="none">
+                        <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="custom-options" id="top-options-${actionId}"></div>
+            </div>
+            <div id="top-subtype-${actionId}" style="display: none; margin-top: 12px;">
+                <label id="subtype-label-${actionId}">Тип топа сообщений</label>
+                <div class="custom-select-wrapper">
+                    <div class="custom-select" onclick="toggleTopSubtypeSelect(${actionId})">
+                        <span class="custom-select-text" id="top-subtype-text-${actionId}">Выберите тип</span>
+                        <svg class="custom-select-arrow" width="16" height="16" viewBox="0 0 20 20" fill="none">
+                            <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="custom-options" id="top-subtype-options-${actionId}"></div>
+                </div>
+            </div>
+            <div id="top-position-input-${actionId}" style="display: none; margin-top: 12px;">
+                <label>Укажите позицию топа, которую нужно найти (Пример: 4)</label>
+                <input 
+                    type="number" 
+                    class="input-field" 
+                    placeholder="Например: 4" 
+                    min="1"
+                    oninput="handleTopPositionInput(${actionId}, this.value)"
+                />
+            </div>
+        `;
+        
+        // Заполняем опции топов
+        const topOptionsContainer = document.getElementById(`top-options-${actionId}`);
+        topOptions.forEach(option => {
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'custom-option';
+            optionDiv.onclick = () => selectTopType(actionId, option.value, option.label, option.hasSubType, option.subTypes);
+            
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'custom-option-icon';
+            iconDiv.textContent = getTopIcon(option.value);
+            
+            const textDiv = document.createElement('div');
+            textDiv.className = 'custom-option-text';
+            const labelSpan = document.createElement('span');
+            labelSpan.className = 'custom-option-label';
+            labelSpan.textContent = option.label;
+            
+            textDiv.appendChild(labelSpan);
+            optionDiv.appendChild(iconDiv);
+            optionDiv.appendChild(textDiv);
+            topOptionsContainer.appendChild(optionDiv);
+        });
+        
+        // Инициализируем данные для этого действия
+        if (!state.topSelections[actionId]) {
+            state.topSelections[actionId] = {
+                topType: null,
+                subType: null,
+                position: null
+            };
+        }
+    } else if (actionType) {
         const actionTypeObj = actionTypes.find(t => t.value === actionType);
         valueGroup.style.display = 'block';
-        label.textContent = actionTypeObj.label;
-        input.placeholder = actionTypeObj.placeholder;
-        input.value = '';
+        
+        // Восстанавливаем стандартную структуру
+        valueGroup.innerHTML = `
+            <label id="action-label-${actionId}">${actionTypeObj.label}</label>
+            <textarea 
+                class="input-textarea" 
+                id="action-input-${actionId}"
+                placeholder="${actionTypeObj.placeholder}"
+                oninput="handleActionValueChange(${actionId}, this.value)"
+            ></textarea>
+        `;
     } else {
         valueGroup.style.display = 'none';
+    }
+}
+
+// Получить иконку для типа топа
+function getTopIcon(topType) {
+    const icons = {
+        'balance': '💰',
+        'charity': '❤️',
+        'digital_coins': '🪙',
+        'messages': '💬',
+        'level': '⭐'
+    };
+    return icons[topType] || '📊';
+}
+
+// Переключение селекта типа топа
+function toggleTopSelect(actionId) {
+    const actionItem = document.getElementById(`action-${actionId}`);
+    const select = actionItem.querySelector(`#top-select-text-${actionId}`).parentElement;
+    const options = document.getElementById(`top-options-${actionId}`);
+    
+    const isCurrentlyActive = select.classList.contains('active');
+    
+    // Закрываем все селекты
+    document.querySelectorAll('.custom-select').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.custom-options').forEach(o => o.classList.remove('active'));
+    
+    if (!isCurrentlyActive) {
+        select.classList.add('active');
+        options.classList.add('active');
+    }
+}
+
+// Выбор типа топа
+function selectTopType(actionId, topValue, topLabel, hasSubType, subTypes) {
+    const selectText = document.getElementById(`top-select-text-${actionId}`);
+    const select = selectText.parentElement;
+    const options = document.getElementById(`top-options-${actionId}`);
+    
+    selectText.textContent = topLabel;
+    selectText.classList.add('selected');
+    select.classList.remove('active');
+    options.classList.remove('active');
+    
+    // Сохраняем выбор
+    state.topSelections[actionId].topType = topValue;
+    
+    // Показываем/скрываем подтип для сообщений
+    const subtypeContainer = document.getElementById(`top-subtype-${actionId}`);
+    
+    if (hasSubType && subTypes) {
+        subtypeContainer.style.display = 'block';
+        
+        // Заполняем опции подтипа
+        const subtypeOptionsContainer = document.getElementById(`top-subtype-options-${actionId}`);
+        subtypeOptionsContainer.innerHTML = '';
+        
+        subTypes.forEach(subType => {
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'custom-option';
+            optionDiv.onclick = () => selectTopSubtype(actionId, subType.value, subType.label);
+            
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'custom-option-icon';
+            iconDiv.textContent = subType.value === 'local' ? '🏠' : '🌍';
+            
+            const textDiv = document.createElement('div');
+            textDiv.className = 'custom-option-text';
+            const labelSpan = document.createElement('span');
+            labelSpan.className = 'custom-option-label';
+            labelSpan.textContent = subType.label;
+            
+            textDiv.appendChild(labelSpan);
+            optionDiv.appendChild(iconDiv);
+            optionDiv.appendChild(textDiv);
+            subtypeOptionsContainer.appendChild(optionDiv);
+        });
+        
+        // Скрываем поле позиции пока не выбран подтип
+        document.getElementById(`top-position-input-${actionId}`).style.display = 'none';
+    } else {
+        subtypeContainer.style.display = 'none';
+        state.topSelections[actionId].subType = null;
+        
+        // Показываем поле позиции сразу
+        document.getElementById(`top-position-input-${actionId}`).style.display = 'block';
+    }
+}
+
+// Переключение селекта подтипа топа
+function toggleTopSubtypeSelect(actionId) {
+    const select = document.querySelector(`#top-subtype-text-${actionId}`).parentElement;
+    const options = document.getElementById(`top-subtype-options-${actionId}`);
+    
+    const isCurrentlyActive = select.classList.contains('active');
+    
+    // Закрываем все селекты
+    document.querySelectorAll('.custom-select').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.custom-options').forEach(o => o.classList.remove('active'));
+    
+    if (!isCurrentlyActive) {
+        select.classList.add('active');
+        options.classList.add('active');
+    }
+}
+
+// Выбор подтипа топа
+function selectTopSubtype(actionId, subtypeValue, subtypeLabel) {
+    const selectText = document.getElementById(`top-subtype-text-${actionId}`);
+    const select = selectText.parentElement;
+    const options = document.getElementById(`top-subtype-options-${actionId}`);
+    
+    selectText.textContent = subtypeLabel;
+    selectText.classList.add('selected');
+    select.classList.remove('active');
+    options.classList.remove('active');
+    
+    // Сохраняем выбор
+    state.topSelections[actionId].subType = subtypeValue;
+    
+    // Показываем поле ввода позиции
+    document.getElementById(`top-position-input-${actionId}`).style.display = 'block';
+}
+
+// Обработка ввода позиции топа
+function handleTopPositionInput(actionId, position) {
+    state.topSelections[actionId].position = position;
+    
+    // Формируем итоговое значение для action
+    const action = state.actions.find(a => a.id === actionId);
+    if (action) {
+        const selection = state.topSelections[actionId];
+        let displayValue = '';
+        
+        if (selection.topType === 'messages' && selection.subType) {
+            displayValue = `Сообщения ${selection.subType === 'global' ? 'Глобал' : 'Локал'}`;
+        } else {
+            const topOption = topOptions.find(t => t.value === selection.topType);
+            displayValue = topOption ? topOption.label : selection.topType;
+        }
+        
+        action.value = JSON.stringify({
+            topType: selection.topType,
+            subType: selection.subType,
+            position: selection.position,
+            display: `${displayValue} - позиция ${selection.position}`
+        });
     }
 }
 
@@ -254,6 +482,7 @@ function getActionIcon(actionType) {
         'delete_message': '🗑️',
         'pin_message': '📌',
         'send_dice': '🎲',
+        'get_top_position': '🏆',
         'add_role': '⭐',
         'remove_role': '❌',
         'set_title': '👑'
@@ -401,6 +630,24 @@ function validateForm() {
         if (!action.type) {
             showNotification(`Выберите тип для действия ${i + 1}`, 'error');
             return false;
+        }
+
+        // Специальная проверка для get_top_position
+        if (action.type === 'get_top_position') {
+            const selection = state.topSelections[action.id];
+            if (!selection || !selection.topType) {
+                showNotification(`Выберите тип топа для действия ${i + 1}`, 'error');
+                return false;
+            }
+            if (selection.topType === 'messages' && !selection.subType) {
+                showNotification(`Выберите тип топа сообщений для действия ${i + 1}`, 'error');
+                return false;
+            }
+            if (!selection.position) {
+                showNotification(`Укажите позицию топа для действия ${i + 1}`, 'error');
+                return false;
+            }
+            continue;
         }
 
         // Некоторые действия не требуют параметров
