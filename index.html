@@ -35,21 +35,18 @@
                 </div>
                 <div class="card-body">
                     <div class="form-group">
-                        <label for="triggerType">Тип триггера</label>
-                        <select id="triggerType" class="input-select">
-                            <option value="command">Команда (начинается с /)</option>
-                            <option value="phrase">Фраза или слово</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="triggerValue">Значение триггера</label>
-                        <input 
-                            type="text" 
-                            id="triggerValue" 
-                            class="input-field" 
-                            placeholder="Например: лох или ограб"
-                        >
-                        <small class="hint">Макрос будет срабатывать при получении этого триггера</small>
+                        <label for="triggerValue">Команда триггера</label>
+                        <div class="trigger-input-wrapper">
+                            <span class="trigger-prefix">/</span>
+                            <input 
+                                type="text" 
+                                id="triggerValue" 
+                                class="input-field input-with-prefix" 
+                                placeholder="лох"
+                                maxlength="32"
+                            >
+                        </div>
+                        <small class="hint">Введите одно слово без пробелов (например: лох, ограб, баланс)</small>
                     </div>
                 </div>
             </div>
