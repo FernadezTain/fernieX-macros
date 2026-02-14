@@ -9,7 +9,6 @@ const state = {
 // Типы действий
 const actionTypes = [
     { value: 'send_message', label: 'Отправить сообщение', placeholder: 'Введите текст сообщения' },
-    { value: 'send_photo', label: 'Отправить фото', placeholder: 'Введите URL изображения' },
     { value: 'get_top_position', label: 'Узнать позицию в топе', placeholder: 'Специальное действие', hasSubOptions: true },
     { value: 'robbery', label: 'Ограбление', placeholder: 'Введите ID пользователя', needsTopResult: true },
 ];
