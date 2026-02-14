@@ -11,6 +11,7 @@ const actionTypes = [
     { value: 'send_message', label: 'Отправить сообщение', placeholder: 'Введите текст сообщения' },
     { value: 'send_photo', label: 'Отправить фото', placeholder: 'Введите URL изображения' },
     { value: 'get_top_position', label: 'Узнать позицию в топе', placeholder: 'Специальное действие', hasSubOptions: true },
+    { value: 'robbery', label: 'Ограбление', placeholder: 'Введите ID пользователя', needsTopResult: true }
 ];
 
 // Опции для топов
@@ -331,6 +332,34 @@ function handleActionTypeChange(actionId, actionType) {
                 ></textarea>
             </div>
         `;
+    } else if (actionType === 'robbery') {
+        // Специальная обработка для "Ограбление"
+        const actionTypeObj = actionTypes.find(t => t.value === actionType);
+        valueGroup.style.display = 'block';
+        
+        // Проверяем есть ли предыдущее действие с get_top_position
+        const currentActionIndex = state.actions.findIndex(a => a.id === actionId);
+        const hasPreviousTopAction = currentActionIndex > 0 && 
+            state.actions.slice(0, currentActionIndex).some(a => a.type === 'get_top_position');
+        
+        // Восстанавливаем структуру с кнопкой если есть предыдущее действие топа
+        valueGroup.innerHTML = `
+            <label id="action-label-${actionId}">${actionTypeObj.label}</label>
+            ${hasPreviousTopAction ? `
+                <button class="btn-insert-top-result" onclick="insertTopResultID(${actionId})">
+                    👤 Вставить из результата поиска
+                </button>
+            ` : ''}
+            <div id="robbery-input-container-${actionId}">
+                <input 
+                    type="text" 
+                    class="input-field" 
+                    id="action-input-${actionId}"
+                    placeholder="${actionTypeObj.placeholder}"
+                    oninput="handleRobberyInput(${actionId}, this.value)"
+                />
+            </div>
+        `;
     } else if (actionType) {
         const actionTypeObj = actionTypes.find(t => t.value === actionType);
         valueGroup.style.display = 'block';
@@ -364,6 +393,25 @@ function handleMessageInput(actionId, value) {
     if (hasPreviousTopAction && value.includes('{topresult}')) {
         // Заменяем на блок
         insertTopResult(actionId);
+    } else {
+        action.value = value;
+    }
+}
+
+// Обработка ввода ID для ограбления с автозаменой {topresultID}
+function handleRobberyInput(actionId, value) {
+    const action = state.actions.find(a => a.id === actionId);
+    if (!action) return;
+    
+    // Проверяем есть ли предыдущее действие с get_top_position
+    const currentActionIndex = state.actions.findIndex(a => a.id === actionId);
+    const hasPreviousTopAction = currentActionIndex > 0 && 
+        state.actions.slice(0, currentActionIndex).some(a => a.type === 'get_top_position');
+    
+    // Если есть {topresultID} в тексте и есть предыдущее действие топа
+    if (hasPreviousTopAction && value.includes('{topresultID}')) {
+        // Заменяем на блок
+        insertTopResultID(actionId);
     } else {
         action.value = value;
     }
@@ -412,6 +460,53 @@ function removeTopResult(actionId) {
             placeholder="${actionTypeObj.placeholder}"
             oninput="handleMessageInput(${actionId}, this.value)"
         ></textarea>
+    `;
+}
+
+// Вставка ID результата топа
+function insertTopResultID(actionId) {
+    const action = state.actions.find(a => a.id === actionId);
+    if (!action) return;
+    
+    // Устанавливаем специальное значение
+    action.value = '{topresultID}';
+    
+    // Заменяем input на блок с результатом
+    const container = document.getElementById(`robbery-input-container-${actionId}`);
+    container.innerHTML = `
+        <div class="top-result-block">
+            <div class="top-result-content">
+                <span class="top-result-icon">👤</span>
+                <span class="top-result-text">{topresultID}</span>
+            </div>
+            <button class="top-result-remove" onclick="removeTopResultID(${actionId})">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                    <path d="M6 6L14 14M14 6L6 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+    `;
+}
+
+// Удаление ID результата топа и возврат к вводу
+function removeTopResultID(actionId) {
+    const action = state.actions.find(a => a.id === actionId);
+    if (!action) return;
+    
+    action.value = '';
+    
+    // Возвращаем input
+    const container = document.getElementById(`robbery-input-container-${actionId}`);
+    const actionTypeObj = actionTypes.find(t => t.value === 'robbery');
+    
+    container.innerHTML = `
+        <input 
+            type="text" 
+            class="input-field" 
+            id="action-input-${actionId}"
+            placeholder="${actionTypeObj.placeholder}"
+            oninput="handleRobberyInput(${actionId}, this.value)"
+        />
     `;
 }
 
@@ -575,6 +670,7 @@ function getActionIcon(actionType) {
         'pin_message': '📌',
         'send_dice': '🎲',
         'get_top_position': '🏆',
+        'robbery': '💰',
         'add_role': '⭐',
         'remove_role': '❌',
         'set_title': '👑'
@@ -616,6 +712,10 @@ function selectActionType(actionId, actionType, actionLabel) {
     const select = actionItem.querySelector('.custom-select');
     const options = document.getElementById(`options-${actionId}`);
     
+    // Получаем старый тип действия
+    const action = state.actions.find(a => a.id === actionId);
+    const oldType = action ? action.type : null;
+    
     // Обновляем текст
     selectText.textContent = actionLabel;
     selectText.classList.add('selected');
@@ -625,8 +725,45 @@ function selectActionType(actionId, actionType, actionLabel) {
     options.classList.remove('active');
     actionItem.classList.remove('dropdown-open');
     
+    // Если меняем с get_top_position на что-то другое, сбрасываем зависимые действия
+    if (oldType === 'get_top_position' && actionType !== 'get_top_position') {
+        resetDependentActionsAfterChange(actionId);
+    }
+    
     // Вызываем обработчик изменения
     handleActionTypeChange(actionId, actionType);
+}
+
+// Сброс зависимых действий при изменении типа с get_top_position
+function resetDependentActionsAfterChange(changedActionId) {
+    // Находим индекс измененного действия
+    const changedIndex = state.actions.findIndex(a => a.id === changedActionId);
+    
+    // Проверяем есть ли другие get_top_position действия перед следующими действиями
+    const hasOtherTopActionBefore = (index) => {
+        return state.actions.slice(0, index).some(a => 
+            a.type === 'get_top_position' && a.id !== changedActionId
+        );
+    };
+    
+    // Сбрасываем все действия после измененного
+    state.actions.forEach((action, index) => {
+        if (index > changedIndex) {
+            const hasPreviousTop = hasOtherTopActionBefore(index);
+            
+            // Если нет предыдущих top действий и текущее использует top result
+            if (!hasPreviousTop) {
+                if ((action.type === 'send_message' && action.value === '{topresult}') ||
+                    (action.type === 'robbery' && action.value === '{topresultID}')) {
+                    // Сбрасываем значение
+                    action.value = '';
+                    
+                    // Перерисовываем действие
+                    handleActionTypeChange(action.id, action.type);
+                }
+            }
+        }
+    });
 }
 
 // Закрытие селектов при клике вне их
@@ -651,6 +788,7 @@ function handleActionValueChange(actionId, value) {
 // Удаление действия
 function removeAction(actionId) {
     const actionElement = document.getElementById(`action-${actionId}`);
+    const actionToRemove = state.actions.find(a => a.id === actionId);
     
     // Анимация удаления
     actionElement.style.opacity = '0';
@@ -659,9 +797,50 @@ function removeAction(actionId) {
     setTimeout(() => {
         actionElement.remove();
         state.actions = state.actions.filter(a => a.id !== actionId);
+        
+        // Если удаляемое действие было get_top_position, сбрасываем зависимые действия
+        if (actionToRemove && actionToRemove.type === 'get_top_position') {
+            resetDependentActions(actionId);
+        }
+        
         updateActionNumbers();
         updateAddActionButton();
     }, 400);
+}
+
+// Сброс зависимых действий при удалении get_top_position
+function resetDependentActions(removedActionId) {
+    // Находим индекс удаленного действия
+    const allActionElements = document.querySelectorAll('.action-item');
+    let removedIndex = -1;
+    
+    allActionElements.forEach((element, index) => {
+        if (element.id === `action-${removedActionId}`) {
+            removedIndex = index;
+        }
+    });
+    
+    // Проверяем есть ли другие get_top_position действия перед текущими
+    const hasOtherTopAction = state.actions.some(a => a.type === 'get_top_position');
+    
+    // Сбрасываем все действия после удаленного, которые зависят от top result
+    state.actions.forEach((action, index) => {
+        if (index > removedIndex && !hasOtherTopAction) {
+            // Если это send_message или robbery с topresult
+            if ((action.type === 'send_message' && action.value === '{topresult}') ||
+                (action.type === 'robbery' && action.value === '{topresultID}')) {
+                // Сбрасываем значение
+                action.value = '';
+                
+                // Перерисовываем действие
+                const actionElement = document.getElementById(`action-${action.id}`);
+                if (actionElement) {
+                    // Триггерим повторную отрисовку действия
+                    handleActionTypeChange(action.id, action.type);
+                }
+            }
+        }
+    });
 }
 
 // Обновление номеров действий
