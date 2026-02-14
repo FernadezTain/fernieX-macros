@@ -107,12 +107,24 @@ function createActionElement(actionId, actionNumber) {
         </div>
         <div class="form-group">
             <label>Тип действия</label>
-            <select class="input-select" onchange="handleActionTypeChange(${actionId}, this.value)">
-                <option value="">Выберите действие</option>
-                ${actionTypes.map(type => 
-                    `<option value="${type.value}">${type.label}</option>`
-                ).join('')}
-            </select>
+            <div class="custom-select-wrapper">
+                <div class="custom-select" onclick="toggleCustomSelect(${actionId})">
+                    <span class="custom-select-text" id="select-text-${actionId}">Выберите действие</span>
+                    <svg class="custom-select-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div class="custom-options" id="options-${actionId}">
+                    ${actionTypes.map(type => `
+                        <div class="custom-option" onclick="selectActionType(${actionId}, '${type.value}', '${type.label}')">
+                            <div class="custom-option-icon">${getActionIcon(type.value)}</div>
+                            <div class="custom-option-text">
+                                <span class="custom-option-label">${type.label}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
         </div>
         <div class="form-group" id="action-value-${actionId}" style="display: none;">
             <label id="action-label-${actionId}">Параметр действия</label>
@@ -150,6 +162,73 @@ function handleActionTypeChange(actionId, actionType) {
         valueGroup.style.display = 'none';
     }
 }
+
+// Получить иконку для типа действия
+function getActionIcon(actionType) {
+    const icons = {
+        'send_message': '💬',
+        'send_photo': '🖼️',
+        'send_sticker': '🎨',
+        'kick_user': '👢',
+        'mute_user': '🔇',
+        'warn_user': '⚠️',
+        'delete_message': '🗑️',
+        'pin_message': '📌',
+        'send_dice': '🎲',
+        'add_role': '⭐',
+        'remove_role': '❌',
+        'set_title': '👑'
+    };
+    return icons[actionType] || '⚙️';
+}
+
+// Переключение кастомного селекта
+function toggleCustomSelect(actionId) {
+    const select = document.querySelector(`#action-${actionId} .custom-select`);
+    const options = document.getElementById(`options-${actionId}`);
+    
+    // Закрываем все остальные селекты
+    document.querySelectorAll('.custom-select').forEach(s => {
+        if (s !== select) {
+            s.classList.remove('active');
+        }
+    });
+    document.querySelectorAll('.custom-options').forEach(o => {
+        if (o !== options) {
+            o.classList.remove('active');
+        }
+    });
+    
+    // Переключаем текущий селект
+    select.classList.toggle('active');
+    options.classList.toggle('active');
+}
+
+// Выбор типа действия из кастомного селекта
+function selectActionType(actionId, actionType, actionLabel) {
+    const selectText = document.getElementById(`select-text-${actionId}`);
+    const select = document.querySelector(`#action-${actionId} .custom-select`);
+    const options = document.getElementById(`options-${actionId}`);
+    
+    // Обновляем текст
+    selectText.textContent = actionLabel;
+    selectText.classList.add('selected');
+    
+    // Закрываем селект
+    select.classList.remove('active');
+    options.classList.remove('active');
+    
+    // Вызываем обработчик изменения
+    handleActionTypeChange(actionId, actionType);
+}
+
+// Закрытие селектов при клике вне их
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.custom-select-wrapper')) {
+        document.querySelectorAll('.custom-select').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.custom-options').forEach(o => o.classList.remove('active'));
+    }
+});
 
 // Обработка изменения значения действия
 function handleActionValueChange(actionId, value) {
