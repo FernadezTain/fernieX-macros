@@ -2,7 +2,6 @@
 const state = {
     actions: [],
     maxActions: 3,
-    triggerType: 'command',
     triggerValue: ''
 };
 
@@ -30,28 +29,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Инициализация обработчиков событий
 function initEventListeners() {
-    document.getElementById('triggerType').addEventListener('change', handleTriggerTypeChange);
-    document.getElementById('triggerValue').addEventListener('input', handleTriggerValueInput);
+    const triggerInput = document.getElementById('triggerValue');
+    triggerInput.addEventListener('input', handleTriggerValueInput);
+    
+    // Запрещаем пробелы и спецсимволы
+    triggerInput.addEventListener('keypress', (e) => {
+        if (e.key === ' ' || /[^a-zA-Zа-яА-ЯёЁ0-9_]/.test(e.key)) {
+            e.preventDefault();
+        }
+    });
+    
     document.getElementById('addActionBtn').addEventListener('click', addAction);
     document.getElementById('createMacroBtn').addEventListener('click', createMacro);
     document.getElementById('createNewBtn').addEventListener('click', resetForm);
 }
 
-// Обработка изменения типа триггера
-function handleTriggerTypeChange(e) {
-    state.triggerType = e.target.value;
-    const input = document.getElementById('triggerValue');
-    
-    if (state.triggerType === 'command') {
-        input.placeholder = 'Например: лох или ограб';
-    } else {
-        input.placeholder = 'Например: привет или спасибо';
-    }
-}
-
 // Обработка ввода значения триггера
 function handleTriggerValueInput(e) {
-    state.triggerValue = e.target.value.trim();
+    // Убираем пробелы и спецсимволы
+    let value = e.target.value.replace(/[^a-zA-Zа-яА-ЯёЁ0-9_]/g, '');
+    e.target.value = value;
+    state.triggerValue = value.trim();
 }
 
 // Добавление нового действия
@@ -203,7 +201,21 @@ function updateAddActionButton() {
 function validateForm() {
     // Проверка триггера
     if (!state.triggerValue) {
-        showNotification('Пожалуйста, укажите триггер макроса', 'error');
+        showNotification('Пожалуйста, укажите команду триггера', 'error');
+        document.getElementById('triggerValue').focus();
+        return false;
+    }
+
+    // Проверка что это одно слово
+    if (state.triggerValue.includes(' ')) {
+        showNotification('Команда должна быть одним словом без пробелов', 'error');
+        document.getElementById('triggerValue').focus();
+        return false;
+    }
+
+    // Проверка длины
+    if (state.triggerValue.length < 2) {
+        showNotification('Команда должна содержать минимум 2 символа', 'error');
         document.getElementById('triggerValue').focus();
         return false;
     }
@@ -242,10 +254,7 @@ function createMacro() {
 
     // Формируем данные макроса
     const macroData = {
-        trigger: {
-            type: state.triggerType,
-            value: state.triggerValue
-        },
+        trigger: state.triggerValue,
         actions: state.actions.map(action => ({
             type: action.type,
             value: action.value
@@ -255,10 +264,8 @@ function createMacro() {
     // Кодируем данные в base64 для передачи в URL
     const encodedData = btoa(encodeURIComponent(JSON.stringify(macroData)));
 
-    // Формируем триггер для отображения
-    const triggerDisplay = state.triggerType === 'command' 
-        ? `/${state.triggerValue}` 
-        : state.triggerValue;
+    // Триггер всегда в формате команды
+    const triggerDisplay = `/${state.triggerValue}`;
 
     // Обновляем превью
     document.getElementById('previewTrigger').textContent = triggerDisplay;
