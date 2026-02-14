@@ -115,6 +115,26 @@ label {
     color: var(--text-primary);
 }
 
+.trigger-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.trigger-prefix {
+    position: absolute;
+    left: 16px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.input-with-prefix {
+    padding-left: 36px !important;
+}
+
 .input-field,
 .input-select,
 .input-textarea {
