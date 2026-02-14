@@ -156,6 +156,166 @@ label {
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+/* Custom Select Dropdown */
+.custom-select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.custom-select {
+    width: 100%;
+    padding: 12px 40px 12px 16px;
+    background: var(--surface-light);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+}
+
+.custom-select:hover {
+    border-color: var(--primary);
+}
+
+.custom-select.active {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.custom-select-arrow {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    transition: transform 0.3s ease;
+}
+
+.custom-select.active .custom-select-arrow {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.custom-select-text {
+    color: var(--text-secondary);
+}
+
+.custom-select-text.selected {
+    color: var(--text-primary);
+}
+
+.custom-options {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    z-index: 100;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(-10px);
+}
+
+.custom-options.active {
+    max-height: 400px;
+    opacity: 1;
+    transform: translateY(0);
+    overflow-y: auto;
+}
+
+.custom-option {
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-left: 3px solid transparent;
+}
+
+.custom-option:first-child {
+    border-radius: 10px 10px 0 0;
+}
+
+.custom-option:last-child {
+    border-radius: 0 0 10px 10px;
+}
+
+.custom-option:hover {
+    background: var(--surface-light);
+    border-left-color: var(--primary);
+    padding-left: 20px;
+}
+
+.custom-option.disabled {
+    color: var(--text-secondary);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.custom-option.disabled:hover {
+    background: transparent;
+    border-left-color: transparent;
+    padding-left: 16px;
+}
+
+.custom-option-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--surface-light);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.custom-option:hover .custom-option-icon {
+    background: var(--primary);
+    transform: scale(1.1);
+}
+
+.custom-option-text {
+    flex: 1;
+}
+
+.custom-option-label {
+    font-weight: 500;
+    display: block;
+    margin-bottom: 2px;
+}
+
+/* Scrollbar for options */
+.custom-options::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-options::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 8px 0;
+}
+
+.custom-options::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+}
+
+.custom-options::-webkit-scrollbar-thumb:hover {
+    background: var(--surface-light);
+}
+
 .input-textarea {
     resize: vertical;
     min-height: 80px;
