@@ -91,51 +91,130 @@ function createActionElement(actionId, actionNumber) {
     div.style.transform = 'translateX(-20px)';
     div.style.transition = 'all 0.4s ease';
 
-    div.innerHTML = `
-        <div class="action-header">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <div class="action-number">${actionNumber}</div>
-                <span class="action-title">Действие ${actionNumber}</span>
-            </div>
-            ${actionNumber > 1 ? `
-                <button class="btn-remove" onclick="removeAction(${actionId})">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <path d="M6 6L14 14M14 6L6 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                </button>
-            ` : ''}
-        </div>
-        <div class="form-group">
-            <label>Тип действия</label>
-            <div class="custom-select-wrapper">
-                <div class="custom-select" onclick="toggleCustomSelect(${actionId})">
-                    <span class="custom-select-text" id="select-text-${actionId}">Выберите действие</span>
-                    <svg class="custom-select-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-                <div class="custom-options" id="options-${actionId}">
-                    ${actionTypes.map(type => `
-                        <div class="custom-option" onclick="selectActionType(${actionId}, '${type.value}', '${type.label}')">
-                            <div class="custom-option-icon">${getActionIcon(type.value)}</div>
-                            <div class="custom-option-text">
-                                <span class="custom-option-label">${type.label}</span>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        </div>
-        <div class="form-group" id="action-value-${actionId}" style="display: none;">
-            <label id="action-label-${actionId}">Параметр действия</label>
-            <textarea 
-                class="input-textarea" 
-                id="action-input-${actionId}"
-                placeholder="Введите параметр"
-                oninput="handleActionValueChange(${actionId}, this.value)"
-            ></textarea>
-        </div>
-    `;
+    // Создаем header
+    const header = document.createElement('div');
+    header.className = 'action-header';
+    
+    const headerLeft = document.createElement('div');
+    headerLeft.style.display = 'flex';
+    headerLeft.style.alignItems = 'center';
+    headerLeft.style.gap = '12px';
+    
+    const numberDiv = document.createElement('div');
+    numberDiv.className = 'action-number';
+    numberDiv.textContent = actionNumber;
+    
+    const titleSpan = document.createElement('span');
+    titleSpan.className = 'action-title';
+    titleSpan.textContent = `Действие ${actionNumber}`;
+    
+    headerLeft.appendChild(numberDiv);
+    headerLeft.appendChild(titleSpan);
+    header.appendChild(headerLeft);
+    
+    if (actionNumber > 1) {
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'btn-remove';
+        removeBtn.onclick = () => removeAction(actionId);
+        removeBtn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M6 6L14 14M14 6L6 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        `;
+        header.appendChild(removeBtn);
+    }
+    
+    div.appendChild(header);
+    
+    // Создаем form-group для селекта
+    const formGroup1 = document.createElement('div');
+    formGroup1.className = 'form-group';
+    
+    const label1 = document.createElement('label');
+    label1.textContent = 'Тип действия';
+    formGroup1.appendChild(label1);
+    
+    // Создаем custom select wrapper
+    const selectWrapper = document.createElement('div');
+    selectWrapper.className = 'custom-select-wrapper';
+    
+    const customSelect = document.createElement('div');
+    customSelect.className = 'custom-select';
+    customSelect.onclick = () => toggleCustomSelect(actionId);
+    
+    const selectText = document.createElement('span');
+    selectText.className = 'custom-select-text';
+    selectText.id = `select-text-${actionId}`;
+    selectText.textContent = 'Выберите действие';
+    
+    const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    arrow.setAttribute('class', 'custom-select-arrow');
+    arrow.setAttribute('width', '20');
+    arrow.setAttribute('height', '20');
+    arrow.setAttribute('viewBox', '0 0 20 20');
+    arrow.setAttribute('fill', 'none');
+    const arrowPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    arrowPath.setAttribute('d', 'M5 7.5L10 12.5L15 7.5');
+    arrowPath.setAttribute('stroke', 'currentColor');
+    arrowPath.setAttribute('stroke-width', '2');
+    arrowPath.setAttribute('stroke-linecap', 'round');
+    arrowPath.setAttribute('stroke-linejoin', 'round');
+    arrow.appendChild(arrowPath);
+    
+    customSelect.appendChild(selectText);
+    customSelect.appendChild(arrow);
+    selectWrapper.appendChild(customSelect);
+    
+    // Создаем options
+    const optionsDiv = document.createElement('div');
+    optionsDiv.className = 'custom-options';
+    optionsDiv.id = `options-${actionId}`;
+    
+    actionTypes.forEach(type => {
+        const option = document.createElement('div');
+        option.className = 'custom-option';
+        option.onclick = () => selectActionType(actionId, type.value, type.label);
+        
+        const iconDiv = document.createElement('div');
+        iconDiv.className = 'custom-option-icon';
+        iconDiv.textContent = getActionIcon(type.value);
+        
+        const textDiv = document.createElement('div');
+        textDiv.className = 'custom-option-text';
+        
+        const labelSpan = document.createElement('span');
+        labelSpan.className = 'custom-option-label';
+        labelSpan.textContent = type.label;
+        
+        textDiv.appendChild(labelSpan);
+        option.appendChild(iconDiv);
+        option.appendChild(textDiv);
+        optionsDiv.appendChild(option);
+    });
+    
+    selectWrapper.appendChild(optionsDiv);
+    formGroup1.appendChild(selectWrapper);
+    div.appendChild(formGroup1);
+    
+    // Создаем form-group для value
+    const formGroup2 = document.createElement('div');
+    formGroup2.className = 'form-group';
+    formGroup2.id = `action-value-${actionId}`;
+    formGroup2.style.display = 'none';
+    
+    const label2 = document.createElement('label');
+    label2.id = `action-label-${actionId}`;
+    label2.textContent = 'Параметр действия';
+    
+    const textarea = document.createElement('textarea');
+    textarea.className = 'input-textarea';
+    textarea.id = `action-input-${actionId}`;
+    textarea.placeholder = 'Введите параметр';
+    textarea.oninput = (e) => handleActionValueChange(actionId, e.target.value);
+    
+    formGroup2.appendChild(label2);
+    formGroup2.appendChild(textarea);
+    div.appendChild(formGroup2);
 
     return div;
 }
@@ -184,30 +263,36 @@ function getActionIcon(actionType) {
 
 // Переключение кастомного селекта
 function toggleCustomSelect(actionId) {
-    const select = document.querySelector(`#action-${actionId} .custom-select`);
+    const actionItem = document.getElementById(`action-${actionId}`);
+    const select = actionItem.querySelector('.custom-select');
     const options = document.getElementById(`options-${actionId}`);
     
-    // Закрываем все остальные селекты
+    const isCurrentlyActive = select.classList.contains('active');
+    
+    // Закрываем все остальные селекты и убираем z-index
+    document.querySelectorAll('.action-item').forEach(item => {
+        item.classList.remove('dropdown-open');
+    });
     document.querySelectorAll('.custom-select').forEach(s => {
-        if (s !== select) {
-            s.classList.remove('active');
-        }
+        s.classList.remove('active');
     });
     document.querySelectorAll('.custom-options').forEach(o => {
-        if (o !== options) {
-            o.classList.remove('active');
-        }
+        o.classList.remove('active');
     });
     
-    // Переключаем текущий селект
-    select.classList.toggle('active');
-    options.classList.toggle('active');
+    // Если селект не был активным, открываем его
+    if (!isCurrentlyActive) {
+        actionItem.classList.add('dropdown-open');
+        select.classList.add('active');
+        options.classList.add('active');
+    }
 }
 
 // Выбор типа действия из кастомного селекта
 function selectActionType(actionId, actionType, actionLabel) {
+    const actionItem = document.getElementById(`action-${actionId}`);
     const selectText = document.getElementById(`select-text-${actionId}`);
-    const select = document.querySelector(`#action-${actionId} .custom-select`);
+    const select = actionItem.querySelector('.custom-select');
     const options = document.getElementById(`options-${actionId}`);
     
     // Обновляем текст
@@ -217,6 +302,7 @@ function selectActionType(actionId, actionType, actionLabel) {
     // Закрываем селект
     select.classList.remove('active');
     options.classList.remove('active');
+    actionItem.classList.remove('dropdown-open');
     
     // Вызываем обработчик изменения
     handleActionTypeChange(actionId, actionType);
@@ -225,6 +311,9 @@ function selectActionType(actionId, actionType, actionLabel) {
 // Закрытие селектов при клике вне их
 document.addEventListener('click', (e) => {
     if (!e.target.closest('.custom-select-wrapper')) {
+        document.querySelectorAll('.action-item').forEach(item => {
+            item.classList.remove('dropdown-open');
+        });
         document.querySelectorAll('.custom-select').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.custom-options').forEach(o => o.classList.remove('active'));
     }
