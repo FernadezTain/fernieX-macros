@@ -10,8 +10,18 @@ const state = {
 const actionTypes = [
     { value: 'send_message', label: 'Отправить сообщение', placeholder: 'Введите текст сообщения' },
     { value: 'send_photo', label: 'Отправить фото', placeholder: 'Введите URL изображения' },
+    { value: 'send_sticker', label: 'Отправить стикер', placeholder: 'Введите ID стикера' },
+    { value: 'kick_user', label: 'Кикнуть пользователя', placeholder: 'Причина (опционально)' },
+    { value: 'mute_user', label: 'Замутить пользователя', placeholder: 'Длительность (например: 1h, 30m)' },
+    { value: 'warn_user', label: 'Выдать предупреждение', placeholder: 'Причина предупреждения' },
+    { value: 'delete_message', label: 'Удалить сообщение', placeholder: 'Не требует параметров' },
+    { value: 'pin_message', label: 'Закрепить сообщение', placeholder: 'Текст для закрепления' },
+    { value: 'send_dice', label: 'Отправить кубик', placeholder: 'Тип: dice, dart, basketball' },
     { value: 'get_top_position', label: 'Узнать позицию в топе', placeholder: 'Специальное действие', hasSubOptions: true },
-    { value: 'robbery', label: 'Ограбление', placeholder: 'Введите ID пользователя', needsTopResult: true }
+    { value: 'robbery', label: 'Ограбление', placeholder: 'Введите ID пользователя', needsTopResult: true },
+    { value: 'add_role', label: 'Выдать роль', placeholder: 'Название роли' },
+    { value: 'remove_role', label: 'Забрать роль', placeholder: 'Название роли' },
+    { value: 'set_title', label: 'Установить титул', placeholder: 'Новый титул пользователя' }
 ];
 
 // Опции для топов
@@ -139,66 +149,31 @@ function createActionElement(actionId, actionNumber) {
     label1.textContent = 'Тип действия';
     formGroup1.appendChild(label1);
     
-    // Создаем custom select wrapper
-    const selectWrapper = document.createElement('div');
-    selectWrapper.className = 'custom-select-wrapper';
+    // Создаем стандартный браузерный select
+    const select = document.createElement('select');
+    select.className = 'input-select';
+    select.id = `select-${actionId}`;
     
-    const customSelect = document.createElement('div');
-    customSelect.className = 'custom-select';
-    customSelect.onclick = () => toggleCustomSelect(actionId);
+    // Добавляем пустую опцию
+    const emptyOption = document.createElement('option');
+    emptyOption.value = '';
+    emptyOption.textContent = 'Выберите действие';
+    select.appendChild(emptyOption);
     
-    const selectText = document.createElement('span');
-    selectText.className = 'custom-select-text';
-    selectText.id = `select-text-${actionId}`;
-    selectText.textContent = 'Выберите действие';
-    
-    const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    arrow.setAttribute('class', 'custom-select-arrow');
-    arrow.setAttribute('width', '16');
-    arrow.setAttribute('height', '16');
-    arrow.setAttribute('viewBox', '0 0 20 20');
-    arrow.setAttribute('fill', 'none');
-    const arrowPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    arrowPath.setAttribute('d', 'M5 7.5L10 12.5L15 7.5');
-    arrowPath.setAttribute('stroke', 'currentColor');
-    arrowPath.setAttribute('stroke-width', '2');
-    arrowPath.setAttribute('stroke-linecap', 'round');
-    arrowPath.setAttribute('stroke-linejoin', 'round');
-    arrow.appendChild(arrowPath);
-    
-    customSelect.appendChild(selectText);
-    customSelect.appendChild(arrow);
-    selectWrapper.appendChild(customSelect);
-    
-    // Создаем options
-    const optionsDiv = document.createElement('div');
-    optionsDiv.className = 'custom-options';
-    optionsDiv.id = `options-${actionId}`;
-    
+    // Добавляем опции действий
     actionTypes.forEach(type => {
-        const option = document.createElement('div');
-        option.className = 'custom-option';
-        option.onclick = () => selectActionType(actionId, type.value, type.label);
-        
-        const iconDiv = document.createElement('div');
-        iconDiv.className = 'custom-option-icon';
-        iconDiv.textContent = getActionIcon(type.value);
-        
-        const textDiv = document.createElement('div');
-        textDiv.className = 'custom-option-text';
-        
-        const labelSpan = document.createElement('span');
-        labelSpan.className = 'custom-option-label';
-        labelSpan.textContent = type.label;
-        
-        textDiv.appendChild(labelSpan);
-        option.appendChild(iconDiv);
-        option.appendChild(textDiv);
-        optionsDiv.appendChild(option);
+        const option = document.createElement('option');
+        option.value = type.value;
+        option.textContent = `${getActionIcon(type.value)} ${type.label}`;
+        select.appendChild(option);
     });
     
-    selectWrapper.appendChild(optionsDiv);
-    formGroup1.appendChild(selectWrapper);
+    // Обработчик изменения
+    select.onchange = (e) => {
+        handleActionTypeChange(actionId, e.target.value);
+    };
+    
+    formGroup1.appendChild(select);
     div.appendChild(formGroup1);
     
     // Создаем form-group для value
@@ -241,26 +216,17 @@ function handleActionTypeChange(actionId, actionType) {
         valueGroup.style.display = 'block';
         valueGroup.innerHTML = `
             <label>Выберите тип топа</label>
-            <div class="custom-select-wrapper">
-                <div class="custom-select" onclick="toggleTopSelect(${actionId})">
-                    <span class="custom-select-text" id="top-select-text-${actionId}">Выберите топ</span>
-                    <svg class="custom-select-arrow" width="16" height="16" viewBox="0 0 20 20" fill="none">
-                        <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-                <div class="custom-options" id="top-options-${actionId}"></div>
-            </div>
+            <select class="input-select" id="top-select-${actionId}" onchange="handleTopTypeChange(${actionId}, this.value)">
+                <option value="">Выберите топ</option>
+                ${topOptions.map(opt => 
+                    `<option value="${opt.value}">${getTopIcon(opt.value)} ${opt.label}</option>`
+                ).join('')}
+            </select>
             <div id="top-subtype-${actionId}" style="display: none; margin-top: 12px;">
-                <label id="subtype-label-${actionId}">Тип топа сообщений</label>
-                <div class="custom-select-wrapper">
-                    <div class="custom-select" onclick="toggleTopSubtypeSelect(${actionId})">
-                        <span class="custom-select-text" id="top-subtype-text-${actionId}">Выберите тип</span>
-                        <svg class="custom-select-arrow" width="16" height="16" viewBox="0 0 20 20" fill="none">
-                            <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </div>
-                    <div class="custom-options" id="top-subtype-options-${actionId}"></div>
-                </div>
+                <label>Тип топа сообщений</label>
+                <select class="input-select" id="top-subtype-select-${actionId}" onchange="handleTopSubtypeChange(${actionId}, this.value)">
+                    <option value="">Выберите тип</option>
+                </select>
             </div>
             <div id="top-position-input-${actionId}" style="display: none; margin-top: 12px;">
                 <label>Укажите позицию топа, которую нужно найти (Пример: 4)</label>
@@ -273,29 +239,6 @@ function handleActionTypeChange(actionId, actionType) {
                 />
             </div>
         `;
-        
-        // Заполняем опции топов
-        const topOptionsContainer = document.getElementById(`top-options-${actionId}`);
-        topOptions.forEach(option => {
-            const optionDiv = document.createElement('div');
-            optionDiv.className = 'custom-option';
-            optionDiv.onclick = () => selectTopType(actionId, option.value, option.label, option.hasSubType, option.subTypes);
-            
-            const iconDiv = document.createElement('div');
-            iconDiv.className = 'custom-option-icon';
-            iconDiv.textContent = getTopIcon(option.value);
-            
-            const textDiv = document.createElement('div');
-            textDiv.className = 'custom-option-text';
-            const labelSpan = document.createElement('span');
-            labelSpan.className = 'custom-option-label';
-            labelSpan.textContent = option.label;
-            
-            textDiv.appendChild(labelSpan);
-            optionDiv.appendChild(iconDiv);
-            optionDiv.appendChild(textDiv);
-            topOptionsContainer.appendChild(optionDiv);
-        });
         
         // Инициализируем данные для этого действия
         if (!state.topSelections[actionId]) {
@@ -337,15 +280,28 @@ function handleActionTypeChange(actionId, actionType) {
         const actionTypeObj = actionTypes.find(t => t.value === actionType);
         valueGroup.style.display = 'block';
         
-        // Проверяем есть ли предыдущее действие с get_top_position
+        // Проверяем есть ли предыдущее действие с get_top_position и это баланс
         const currentActionIndex = state.actions.findIndex(a => a.id === actionId);
-        const hasPreviousTopAction = currentActionIndex > 0 && 
-            state.actions.slice(0, currentActionIndex).some(a => a.type === 'get_top_position');
+        let hasPreviousBalanceTop = false;
         
-        // Восстанавливаем структуру с кнопкой если есть предыдущее действие топа
+        if (currentActionIndex > 0) {
+            // Ищем предыдущие get_top_position действия
+            for (let i = 0; i < currentActionIndex; i++) {
+                const prevAction = state.actions[i];
+                if (prevAction.type === 'get_top_position') {
+                    const selection = state.topSelections[prevAction.id];
+                    if (selection && selection.topType === 'balance') {
+                        hasPreviousBalanceTop = true;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Восстанавливаем структуру с кнопкой если есть предыдущее действие топа баланса
         valueGroup.innerHTML = `
             <label id="action-label-${actionId}">${actionTypeObj.label}</label>
-            ${hasPreviousTopAction ? `
+            ${hasPreviousBalanceTop ? `
                 <button class="btn-insert-top-result" onclick="insertTopResultID(${actionId})">
                     👤 Вставить из результата поиска
                 </button>
@@ -403,13 +359,25 @@ function handleRobberyInput(actionId, value) {
     const action = state.actions.find(a => a.id === actionId);
     if (!action) return;
     
-    // Проверяем есть ли предыдущее действие с get_top_position
+    // Проверяем есть ли предыдущее действие с get_top_position и это баланс
     const currentActionIndex = state.actions.findIndex(a => a.id === actionId);
-    const hasPreviousTopAction = currentActionIndex > 0 && 
-        state.actions.slice(0, currentActionIndex).some(a => a.type === 'get_top_position');
+    let hasPreviousBalanceTop = false;
     
-    // Если есть {topresultID} в тексте и есть предыдущее действие топа
-    if (hasPreviousTopAction && value.includes('{topresultID}')) {
+    if (currentActionIndex > 0) {
+        for (let i = 0; i < currentActionIndex; i++) {
+            const prevAction = state.actions[i];
+            if (prevAction.type === 'get_top_position') {
+                const selection = state.topSelections[prevAction.id];
+                if (selection && selection.topType === 'balance') {
+                    hasPreviousBalanceTop = true;
+                    break;
+                }
+            }
+        }
+    }
+    
+    // Если есть {topresultID} в тексте и есть предыдущее действие топа баланса
+    if (hasPreviousBalanceTop && value.includes('{topresultID}')) {
         // Заменяем на блок
         insertTopResultID(actionId);
     } else {
@@ -522,67 +490,30 @@ function getTopIcon(topType) {
     return icons[topType] || '📊';
 }
 
-// Переключение селекта типа топа
-function toggleTopSelect(actionId) {
-    const actionItem = document.getElementById(`action-${actionId}`);
-    const select = actionItem.querySelector(`#top-select-text-${actionId}`).parentElement;
-    const options = document.getElementById(`top-options-${actionId}`);
+// Обработка изменения типа топа
+function handleTopTypeChange(actionId, topValue) {
+    if (!topValue) return;
     
-    const isCurrentlyActive = select.classList.contains('active');
-    
-    // Закрываем все селекты
-    document.querySelectorAll('.custom-select').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.custom-options').forEach(o => o.classList.remove('active'));
-    
-    if (!isCurrentlyActive) {
-        select.classList.add('active');
-        options.classList.add('active');
-    }
-}
-
-// Выбор типа топа
-function selectTopType(actionId, topValue, topLabel, hasSubType, subTypes) {
-    const selectText = document.getElementById(`top-select-text-${actionId}`);
-    const select = selectText.parentElement;
-    const options = document.getElementById(`top-options-${actionId}`);
-    
-    selectText.textContent = topLabel;
-    selectText.classList.add('selected');
-    select.classList.remove('active');
-    options.classList.remove('active');
+    const topOption = topOptions.find(opt => opt.value === topValue);
+    if (!topOption) return;
     
     // Сохраняем выбор
     state.topSelections[actionId].topType = topValue;
     
     // Показываем/скрываем подтип для сообщений
     const subtypeContainer = document.getElementById(`top-subtype-${actionId}`);
+    const subtypeSelect = document.getElementById(`top-subtype-select-${actionId}`);
     
-    if (hasSubType && subTypes) {
+    if (topOption.hasSubType && topOption.subTypes) {
         subtypeContainer.style.display = 'block';
         
         // Заполняем опции подтипа
-        const subtypeOptionsContainer = document.getElementById(`top-subtype-options-${actionId}`);
-        subtypeOptionsContainer.innerHTML = '';
-        
-        subTypes.forEach(subType => {
-            const optionDiv = document.createElement('div');
-            optionDiv.className = 'custom-option';
-            optionDiv.onclick = () => selectTopSubtype(actionId, subType.value, subType.label);
-            
-            const iconDiv = document.createElement('div');
-            iconDiv.className = 'custom-option-icon';
-            iconDiv.textContent = subType.value === 'local' ? '🏠' : '🌍';
-            
-            const textDiv = document.createElement('div');
-            textDiv.className = 'custom-option-text';
-            const labelSpan = document.createElement('span');
-            labelSpan.className = 'custom-option-label';
-            labelSpan.textContent = subType.label;
-            
-            textDiv.appendChild(labelSpan);
-            optionDiv.appendChild(iconDiv);
-            optionDiv.appendChild(textDiv);
-            subtypeOptionsContainer.appendChild(optionDiv);
+        subtypeSelect.innerHTML = '<option value="">Выберите тип</option>';
+        topOption.subTypes.forEach(subType => {
+            const option = document.createElement('option');
+            option.value = subType.value;
+            option.textContent = `${subType.value === 'local' ? '🏠' : '🌍'} ${subType.label}`;
+            subtypeSelect.appendChild(option);
         });
         
         // Скрываем поле позиции пока не выбран подтип
@@ -596,33 +527,9 @@ function selectTopType(actionId, topValue, topLabel, hasSubType, subTypes) {
     }
 }
 
-// Переключение селекта подтипа топа
-function toggleTopSubtypeSelect(actionId) {
-    const select = document.querySelector(`#top-subtype-text-${actionId}`).parentElement;
-    const options = document.getElementById(`top-subtype-options-${actionId}`);
-    
-    const isCurrentlyActive = select.classList.contains('active');
-    
-    // Закрываем все селекты
-    document.querySelectorAll('.custom-select').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.custom-options').forEach(o => o.classList.remove('active'));
-    
-    if (!isCurrentlyActive) {
-        select.classList.add('active');
-        options.classList.add('active');
-    }
-}
-
-// Выбор подтипа топа
-function selectTopSubtype(actionId, subtypeValue, subtypeLabel) {
-    const selectText = document.getElementById(`top-subtype-text-${actionId}`);
-    const select = selectText.parentElement;
-    const options = document.getElementById(`top-subtype-options-${actionId}`);
-    
-    selectText.textContent = subtypeLabel;
-    selectText.classList.add('selected');
-    select.classList.remove('active');
-    options.classList.remove('active');
+// Обработка изменения подтипа топа
+function handleTopSubtypeChange(actionId, subtypeValue) {
+    if (!subtypeValue) return;
     
     // Сохраняем выбор
     state.topSelections[actionId].subType = subtypeValue;
@@ -662,120 +569,11 @@ function getActionIcon(actionType) {
     const icons = {
         'send_message': '💬',
         'send_photo': '🖼️',
-        'send_sticker': '🎨',
-        'kick_user': '👢',
-        'mute_user': '🔇',
-        'warn_user': '⚠️',
-        'delete_message': '🗑️',
-        'pin_message': '📌',
-        'send_dice': '🎲',
         'get_top_position': '🏆',
-        'robbery': '💰',
-        'add_role': '⭐',
-        'remove_role': '❌',
-        'set_title': '👑'
+        'robbery': '💰'
     };
     return icons[actionType] || '⚙️';
 }
-
-// Переключение кастомного селекта
-function toggleCustomSelect(actionId) {
-    const actionItem = document.getElementById(`action-${actionId}`);
-    const select = actionItem.querySelector('.custom-select');
-    const options = document.getElementById(`options-${actionId}`);
-    
-    const isCurrentlyActive = select.classList.contains('active');
-    
-    // Закрываем все остальные селекты и убираем z-index
-    document.querySelectorAll('.action-item').forEach(item => {
-        item.classList.remove('dropdown-open');
-    });
-    document.querySelectorAll('.custom-select').forEach(s => {
-        s.classList.remove('active');
-    });
-    document.querySelectorAll('.custom-options').forEach(o => {
-        o.classList.remove('active');
-    });
-    
-    // Если селект не был активным, открываем его
-    if (!isCurrentlyActive) {
-        actionItem.classList.add('dropdown-open');
-        select.classList.add('active');
-        options.classList.add('active');
-    }
-}
-
-// Выбор типа действия из кастомного селекта
-function selectActionType(actionId, actionType, actionLabel) {
-    const actionItem = document.getElementById(`action-${actionId}`);
-    const selectText = document.getElementById(`select-text-${actionId}`);
-    const select = actionItem.querySelector('.custom-select');
-    const options = document.getElementById(`options-${actionId}`);
-    
-    // Получаем старый тип действия
-    const action = state.actions.find(a => a.id === actionId);
-    const oldType = action ? action.type : null;
-    
-    // Обновляем текст
-    selectText.textContent = actionLabel;
-    selectText.classList.add('selected');
-    
-    // Закрываем селект
-    select.classList.remove('active');
-    options.classList.remove('active');
-    actionItem.classList.remove('dropdown-open');
-    
-    // Если меняем с get_top_position на что-то другое, сбрасываем зависимые действия
-    if (oldType === 'get_top_position' && actionType !== 'get_top_position') {
-        resetDependentActionsAfterChange(actionId);
-    }
-    
-    // Вызываем обработчик изменения
-    handleActionTypeChange(actionId, actionType);
-}
-
-// Сброс зависимых действий при изменении типа с get_top_position
-function resetDependentActionsAfterChange(changedActionId) {
-    // Находим индекс измененного действия
-    const changedIndex = state.actions.findIndex(a => a.id === changedActionId);
-    
-    // Проверяем есть ли другие get_top_position действия перед следующими действиями
-    const hasOtherTopActionBefore = (index) => {
-        return state.actions.slice(0, index).some(a => 
-            a.type === 'get_top_position' && a.id !== changedActionId
-        );
-    };
-    
-    // Сбрасываем все действия после измененного
-    state.actions.forEach((action, index) => {
-        if (index > changedIndex) {
-            const hasPreviousTop = hasOtherTopActionBefore(index);
-            
-            // Если нет предыдущих top действий и текущее использует top result
-            if (!hasPreviousTop) {
-                if ((action.type === 'send_message' && action.value === '{topresult}') ||
-                    (action.type === 'robbery' && action.value === '{topresultID}')) {
-                    // Сбрасываем значение
-                    action.value = '';
-                    
-                    // Перерисовываем действие
-                    handleActionTypeChange(action.id, action.type);
-                }
-            }
-        }
-    });
-}
-
-// Закрытие селектов при клике вне их
-document.addEventListener('click', (e) => {
-    if (!e.target.closest('.custom-select-wrapper')) {
-        document.querySelectorAll('.action-item').forEach(item => {
-            item.classList.remove('dropdown-open');
-        });
-        document.querySelectorAll('.custom-select').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.custom-options').forEach(o => o.classList.remove('active'));
-    }
-});
 
 // Обработка изменения значения действия
 function handleActionValueChange(actionId, value) {
