@@ -304,6 +304,33 @@ function handleActionTypeChange(actionId, actionType) {
                 position: null
             };
         }
+    } else if (actionType === 'send_message') {
+        // Специальная обработка для "Отправить сообщение"
+        const actionTypeObj = actionTypes.find(t => t.value === actionType);
+        valueGroup.style.display = 'block';
+        
+        // Проверяем есть ли предыдущее действие с get_top_position
+        const currentActionIndex = state.actions.findIndex(a => a.id === actionId);
+        const hasPreviousTopAction = currentActionIndex > 0 && 
+            state.actions.slice(0, currentActionIndex).some(a => a.type === 'get_top_position');
+        
+        // Восстанавливаем структуру с кнопкой если есть предыдущее действие топа
+        valueGroup.innerHTML = `
+            <label id="action-label-${actionId}">${actionTypeObj.label}</label>
+            ${hasPreviousTopAction ? `
+                <button class="btn-insert-top-result" onclick="insertTopResult(${actionId})">
+                    🏆 Вывести результат поиска топа
+                </button>
+            ` : ''}
+            <div id="message-input-container-${actionId}">
+                <textarea 
+                    class="input-textarea" 
+                    id="action-input-${actionId}"
+                    placeholder="${actionTypeObj.placeholder}"
+                    oninput="handleMessageInput(${actionId}, this.value)"
+                ></textarea>
+            </div>
+        `;
     } else if (actionType) {
         const actionTypeObj = actionTypes.find(t => t.value === actionType);
         valueGroup.style.display = 'block';
@@ -321,6 +348,71 @@ function handleActionTypeChange(actionId, actionType) {
     } else {
         valueGroup.style.display = 'none';
     }
+}
+
+// Обработка ввода сообщения с автозаменой {topresult}
+function handleMessageInput(actionId, value) {
+    const action = state.actions.find(a => a.id === actionId);
+    if (!action) return;
+    
+    // Проверяем есть ли предыдущее действие с get_top_position
+    const currentActionIndex = state.actions.findIndex(a => a.id === actionId);
+    const hasPreviousTopAction = currentActionIndex > 0 && 
+        state.actions.slice(0, currentActionIndex).some(a => a.type === 'get_top_position');
+    
+    // Если есть {topresult} в тексте и есть предыдущее действие топа
+    if (hasPreviousTopAction && value.includes('{topresult}')) {
+        // Заменяем на блок
+        insertTopResult(actionId);
+    } else {
+        action.value = value;
+    }
+}
+
+// Вставка результата топа
+function insertTopResult(actionId) {
+    const action = state.actions.find(a => a.id === actionId);
+    if (!action) return;
+    
+    // Устанавливаем специальное значение
+    action.value = '{topresult}';
+    
+    // Заменяем textarea на блок с результатом
+    const container = document.getElementById(`message-input-container-${actionId}`);
+    container.innerHTML = `
+        <div class="top-result-block">
+            <div class="top-result-content">
+                <span class="top-result-icon">🏆</span>
+                <span class="top-result-text">{topresult}</span>
+            </div>
+            <button class="top-result-remove" onclick="removeTopResult(${actionId})">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                    <path d="M6 6L14 14M14 6L6 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+    `;
+}
+
+// Удаление результата топа и возврат к вводу
+function removeTopResult(actionId) {
+    const action = state.actions.find(a => a.id === actionId);
+    if (!action) return;
+    
+    action.value = '';
+    
+    // Возвращаем textarea
+    const container = document.getElementById(`message-input-container-${actionId}`);
+    const actionTypeObj = actionTypes.find(t => t.value === 'send_message');
+    
+    container.innerHTML = `
+        <textarea 
+            class="input-textarea" 
+            id="action-input-${actionId}"
+            placeholder="${actionTypeObj.placeholder}"
+            oninput="handleMessageInput(${actionId}, this.value)"
+        ></textarea>
+    `;
 }
 
 // Получить иконку для типа топа
