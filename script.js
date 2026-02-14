@@ -10,18 +10,8 @@ const state = {
 const actionTypes = [
     { value: 'send_message', label: 'Отправить сообщение', placeholder: 'Введите текст сообщения' },
     { value: 'send_photo', label: 'Отправить фото', placeholder: 'Введите URL изображения' },
-    { value: 'send_sticker', label: 'Отправить стикер', placeholder: 'Введите ID стикера' },
-    { value: 'kick_user', label: 'Кикнуть пользователя', placeholder: 'Причина (опционально)' },
-    { value: 'mute_user', label: 'Замутить пользователя', placeholder: 'Длительность (например: 1h, 30m)' },
-    { value: 'warn_user', label: 'Выдать предупреждение', placeholder: 'Причина предупреждения' },
-    { value: 'delete_message', label: 'Удалить сообщение', placeholder: 'Не требует параметров' },
-    { value: 'pin_message', label: 'Закрепить сообщение', placeholder: 'Текст для закрепления' },
-    { value: 'send_dice', label: 'Отправить кубик', placeholder: 'Тип: dice, dart, basketball' },
     { value: 'get_top_position', label: 'Узнать позицию в топе', placeholder: 'Специальное действие', hasSubOptions: true },
-    { value: 'robbery', label: 'Ограбление', placeholder: 'Введите ID пользователя', needsTopResult: true },
-    { value: 'add_role', label: 'Выдать роль', placeholder: 'Название роли' },
-    { value: 'remove_role', label: 'Забрать роль', placeholder: 'Название роли' },
-    { value: 'set_title', label: 'Установить титул', placeholder: 'Новый титул пользователя' }
+    { value: 'robbery', label: 'Ограбление', placeholder: 'Введите ID пользователя', needsTopResult: true }
 ];
 
 // Опции для топов
