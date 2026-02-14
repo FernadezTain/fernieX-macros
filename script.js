@@ -739,8 +739,8 @@ function validateForm() {
     }
 
     // Проверка длины
-    if (state.triggerValue.length < 2) {
-        showNotification('Команда должна содержать минимум 2 символа', 'error');
+    if (state.triggerValue.length < 1) {
+        showNotification('Команда должна содержать минимум 1 символ', 'error');
         document.getElementById('triggerValue').focus();
         return false;
     }
