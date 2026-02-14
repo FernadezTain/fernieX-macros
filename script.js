@@ -10,8 +10,18 @@ const state = {
 const actionTypes = [
     { value: 'send_message', label: 'Отправить сообщение', placeholder: 'Введите текст сообщения' },
     { value: 'send_photo', label: 'Отправить фото', placeholder: 'Введите URL изображения' },
+    { value: 'send_sticker', label: 'Отправить стикер', placeholder: 'Введите ID стикера' },
+    { value: 'kick_user', label: 'Кикнуть пользователя', placeholder: 'Причина (опционально)' },
+    { value: 'mute_user', label: 'Замутить пользователя', placeholder: 'Длительность (например: 1h, 30m)' },
+    { value: 'warn_user', label: 'Выдать предупреждение', placeholder: 'Причина предупреждения' },
+    { value: 'delete_message', label: 'Удалить сообщение', placeholder: 'Не требует параметров' },
+    { value: 'pin_message', label: 'Закрепить сообщение', placeholder: 'Текст для закрепления' },
+    { value: 'send_dice', label: 'Отправить кубик', placeholder: 'Тип: dice, dart, basketball' },
     { value: 'get_top_position', label: 'Узнать позицию в топе', placeholder: 'Специальное действие', hasSubOptions: true },
-    { value: 'robbery', label: 'Ограбление', placeholder: 'Введите ID пользователя', needsTopResult: true }
+    { value: 'robbery', label: 'Ограбление', placeholder: 'Введите ID пользователя', needsTopResult: true },
+    { value: 'add_role', label: 'Выдать роль', placeholder: 'Название роли' },
+    { value: 'remove_role', label: 'Забрать роль', placeholder: 'Название роли' },
+    { value: 'set_title', label: 'Установить титул', placeholder: 'Новый титул пользователя' }
 ];
 
 // Опции для топов
@@ -220,13 +230,19 @@ function handleActionTypeChange(actionId, actionType) {
             </div>
             <div id="top-position-input-${actionId}" style="display: none; margin-top: 12px;">
                 <label>Укажите позицию топа, которую нужно найти (Пример: 4)</label>
-                <input 
-                    type="number" 
-                    class="input-field" 
-                    placeholder="Например: 4" 
-                    min="1"
-                    oninput="handleTopPositionInput(${actionId}, this.value)"
-                />
+                <button class="btn-insert-top-result" onclick="insertMyPosition(${actionId})" style="margin-bottom: 10px;">
+                    👤 Моя позиция
+                </button>
+                <div id="position-input-container-${actionId}">
+                    <input 
+                        type="number" 
+                        class="input-field" 
+                        id="position-number-input-${actionId}"
+                        placeholder="Например: 4" 
+                        min="1"
+                        oninput="handleTopPositionInput(${actionId}, this.value)"
+                    />
+                </div>
             </div>
         `;
         
@@ -554,6 +570,70 @@ function handleTopPositionInput(actionId, position) {
     }
 }
 
+// Вставка "Моя позиция"
+function insertMyPosition(actionId) {
+    const action = state.actions.find(a => a.id === actionId);
+    if (!action) return;
+    
+    // Устанавливаем специальное значение
+    state.topSelections[actionId].position = '{me}';
+    
+    const selection = state.topSelections[actionId];
+    let displayValue = '';
+    
+    if (selection.topType === 'messages' && selection.subType) {
+        displayValue = `Сообщения ${selection.subType === 'global' ? 'Глобал' : 'Локал'}`;
+    } else {
+        const topOption = topOptions.find(t => t.value === selection.topType);
+        displayValue = topOption ? topOption.label : selection.topType;
+    }
+    
+    action.value = JSON.stringify({
+        topType: selection.topType,
+        subType: selection.subType,
+        position: '{me}',
+        display: `${displayValue} - моя позиция`
+    });
+    
+    // Заменяем input на блок с результатом
+    const container = document.getElementById(`position-input-container-${actionId}`);
+    container.innerHTML = `
+        <div class="top-result-block">
+            <div class="top-result-content">
+                <span class="top-result-icon">👤</span>
+                <span class="top-result-text">{me}</span>
+            </div>
+            <button class="top-result-remove" onclick="removeMyPosition(${actionId})">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
+                    <path d="M6 6L14 14M14 6L6 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+    `;
+}
+
+// Удаление "Моя позиция" и возврат к вводу
+function removeMyPosition(actionId) {
+    const action = state.actions.find(a => a.id === actionId);
+    if (!action) return;
+    
+    state.topSelections[actionId].position = null;
+    action.value = '';
+    
+    // Возвращаем input
+    const container = document.getElementById(`position-input-container-${actionId}`);
+    container.innerHTML = `
+        <input 
+            type="number" 
+            class="input-field" 
+            id="position-number-input-${actionId}"
+            placeholder="Например: 4" 
+            min="1"
+            oninput="handleTopPositionInput(${actionId}, this.value)"
+        />
+    `;
+}
+
 // Получить иконку для типа действия
 function getActionIcon(actionType) {
     const icons = {
@@ -702,8 +782,8 @@ function validateForm() {
                 showNotification(`Выберите тип топа сообщений для действия ${i + 1}`, 'error');
                 return false;
             }
-            if (!selection.position) {
-                showNotification(`Укажите позицию топа для действия ${i + 1}`, 'error');
+            if (!selection.position || (selection.position !== '{me}' && !selection.position)) {
+                showNotification(`Укажите позицию топа или выберите "Моя позиция" для действия ${i + 1}`, 'error');
                 return false;
             }
             continue;
