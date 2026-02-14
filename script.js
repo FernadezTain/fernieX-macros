@@ -796,59 +796,63 @@ function createMacro() {
         return;
     }
 
+    // Функция транслитерации кириллицы в латиницу
+    function transliterate(text) {
+        const map = {
+            'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
+            'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+            'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+            'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch',
+            'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya',
+            'А': 'A', 'Б': 'B', 'В': 'V', 'Г': 'G', 'Д': 'D', 'Е': 'E', 'Ё': 'Yo',
+            'Ж': 'Zh', 'З': 'Z', 'И': 'I', 'Й': 'Y', 'К': 'K', 'Л': 'L', 'М': 'M',
+            'Н': 'N', 'О': 'O', 'П': 'P', 'Р': 'R', 'С': 'S', 'Т': 'T', 'У': 'U',
+            'Ф': 'F', 'Х': 'H', 'Ц': 'Ts', 'Ч': 'Ch', 'Ш': 'Sh', 'Щ': 'Sch',
+            'Ъ': '', 'Ы': 'Y', 'Ь': '', 'Э': 'E', 'Ю': 'Yu', 'Я': 'Ya',
+            ' ': '_', '.': '', ',': '', '!': '', '?': '', ':': '', ';': ''
+        };
+        
+        return text.split('').map(char => map[char] || char).join('');
+    }
+
     // Формируем компактные данные макроса
-    const parts = [state.triggerValue];  // БЕЗ транслитерации!
+    const parts = [transliterate(state.triggerValue)];
     
     state.actions.forEach(action => {
         if (action.type === 'get_top_position') {
-            // Парсим JSON из value
             const data = JSON.parse(action.value);
-            // Формат: t-topType-subType-position
             const subType = data.subType || 'none';
             const position = data.position === '{me}' ? 'ME' : data.position;
             parts.push(`t-${data.topType}-${subType}-${position}`);
         } else if (action.type === 'send_message') {
-            // Формат: m-текст
             let messageText = action.value;
-            
-            // Заменяем спецсимволы на безопасные
             messageText = messageText
                 .replace(/\{topresult\}/g, 'TOPRES')
                 .replace(/\{topresultID\}/g, 'TOPID')
                 .replace(/\{me\}/g, 'ME');
-            
-            // БЕЗ транслитерации! Оставляем текст как есть
-            
+            messageText = transliterate(messageText);
             parts.push(`m-${messageText}`);
         } else if (action.type === 'send_photo') {
-            // Формат: p-url
             parts.push(`p-${action.value}`);
         } else if (action.type === 'robbery') {
-            // Формат: r-id
             let targetId = action.value;
             targetId = targetId.replace(/\{topresultID\}/g, 'TOPID');
             parts.push(`r-${targetId}`);
         }
     });
     
-    // Соединяем через _A_
     const macroString = parts.join('_A_');
-
-    // Триггер всегда в формате команды
     const triggerDisplay = `/${state.triggerValue}`;
 
-    // Обновляем превью
     document.getElementById('previewTrigger').textContent = triggerDisplay;
     document.getElementById('previewActionsCount').textContent = state.actions.length;
 
-    // Формируем ссылку на бота С ПРЕФИКСОМ macro_
     const botLink = `https://t.me/FernieXZBTBot?start=macro_${macroString}`;
     document.getElementById('installBtn').href = botLink;
 
     console.log('[DEBUG] Generated macro string:', macroString);
     console.log('[DEBUG] Generated bot link:', botLink);
 
-    // Показываем секцию результата
     showResultSection();
 }
 
