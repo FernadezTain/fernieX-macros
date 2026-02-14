@@ -803,23 +803,31 @@ function createMacro() {
         if (action.type === 'get_top_position') {
             // Парсим JSON из value
             const data = JSON.parse(action.value);
-            // Формат: get_top:topType:subType:position
-            const subType = data.subType || '';
-            parts.push(`get_top:${data.topType}:${subType}:${data.position}`);
+            // Формат: t-topType-subType-position
+            // t = top, используем безопасные разделители
+            const subType = data.subType || 'none';
+            const position = data.position;
+            parts.push(`t-${data.topType}-${subType}-${position}`);
         } else if (action.type === 'send_message') {
-            // Формат: msg:текст
-            parts.push(`msg:${action.value}`);
+            // Формат: m-текст (m = message)
+            // Заменяем спецсимволы на безопасные
+            const safeText = action.value
+                .replace(/\{topresult\}/g, 'TOPRES')
+                .replace(/\{topresultID\}/g, 'TOPID')
+                .replace(/\{me\}/g, 'ME');
+            parts.push(`m-${safeText}`);
         } else if (action.type === 'send_photo') {
-            // Формат: photo:url
-            parts.push(`photo:${action.value}`);
+            // Формат: p-url (p = photo)
+            parts.push(`p-${action.value}`);
         } else if (action.type === 'robbery') {
-            // Формат: rob:id
-            parts.push(`rob:${action.value}`);
+            // Формат: r-id (r = robbery)
+            const safeId = action.value.replace(/\{topresultID\}/g, 'TOPID');
+            parts.push(`r-${safeId}`);
         }
     });
     
-    // Соединяем через |
-    const macroString = parts.join('|');
+    // Соединяем через _A_ (Action разделитель)
+    const macroString = parts.join('_A_');
 
     // Триггер всегда в формате команды
     const triggerDisplay = `/${state.triggerValue}`;
@@ -829,7 +837,7 @@ function createMacro() {
     document.getElementById('previewActionsCount').textContent = state.actions.length;
 
     // Формируем ссылку на бота
-    const botLink = `https://t.me/FernieXZBTBot?start=${encodeURIComponent(macroString)}`;
+    const botLink = `https://t.me/FernieXZBTBot?start=${macroString}`;
     document.getElementById('installBtn').href = botLink;
 
     // Показываем секцию результата
