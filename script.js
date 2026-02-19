@@ -846,7 +846,7 @@ function createMacro() {
     document.getElementById('previewTrigger').textContent = triggerDisplay;
     document.getElementById('previewActionsCount').textContent = state.actions.length;
 
-    const botLink = `https://t.me/FernieXZBTBot?start=macro_${macroString}`;
+    const botLink = `https://t.me/FernieXBot?start=macro_${macroString}`;
     document.getElementById('installBtn').href = botLink;
 
     console.log('[DEBUG] Generated macro string:', macroString);
