@@ -1,7 +1,7 @@
 // Состояние приложения
 const state = {
     actions: [],
-    maxActions: 3,
+    maxActions: 4,
     triggerValue: '',
     topSelections: {} // Хранение данных о выборе топов для каждого действия
 };
